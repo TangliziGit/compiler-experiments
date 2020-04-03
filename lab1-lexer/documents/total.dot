@@ -16,6 +16,7 @@ digraph {
     DB_PUNC_FST, DB_PUNC_SEC
 
     {
+        START -> START [label="white space"];
         START -> ERROR [label="other"];
 
         // digit

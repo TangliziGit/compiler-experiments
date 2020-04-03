@@ -51,7 +51,7 @@ object LexerScanner {
       case ((tokens, errors), (colNo, word)) if KeywordToken.isMatch(word) =>
         (tokens :+ KeywordToken.matchToken(word), errors)
 
-      case ((tokens, errors), (colNo, " ")) =>
+      case ((tokens, errors), (colNo, whiteSpace)) if whiteSpace == " " || whiteSpace == "\t" =>
         (tokens, errors)
 
       case ((tokens, errors), (colNo, word)) =>
