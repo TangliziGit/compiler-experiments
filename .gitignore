@@ -1,0 +1,5 @@
+*.class
+*.kotlin_module
+
+.idea/
+.attach_*

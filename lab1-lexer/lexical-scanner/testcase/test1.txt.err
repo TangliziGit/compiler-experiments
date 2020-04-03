@@ -1,0 +1,11 @@
+(18:8): Error: the character `_` is not existed lexically.
+        _index = 0;
+        ^
+
+(51:30): Error: the character `>` is not existed lexically.
+        if(messagelist.length > 0){
+                              ^
+
+(68:28): Error: the AND operator is `&&`, not single `&`.
+        while((tmp2 < tmp3)&(tmp1<tmp2)){
+                            ^

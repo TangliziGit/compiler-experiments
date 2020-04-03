@@ -1,0 +1,11 @@
+(6:21): Error: the character `|` is not existed lexically.
+        while(!false || true){
+                     ^
+
+(6:22): Error: the character `|` is not existed lexically.
+        while(!false || true){
+                      ^
+
+(51:30): Error: the character `>` is not existed lexically.
+        if(messagelist.length > 0){
+                              ^
