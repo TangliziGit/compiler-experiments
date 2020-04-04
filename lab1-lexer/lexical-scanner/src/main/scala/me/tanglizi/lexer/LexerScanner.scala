@@ -24,7 +24,8 @@ object LexerScanner {
     val destWriter: PrintWriter = new PrintWriter(destFilename)
     val errWriter: PrintWriter = new PrintWriter(errFilename)
 
-    val splicedLines: Iterator[Array[String]] = source.getLines().map(line => line
+    val splicedLines: Iterator[Array[String]] = source.getLines()
+      .map(_
         .split(splitRegex)
         .filter(_ != "")
       )
@@ -45,7 +46,9 @@ object LexerScanner {
   }
 
   private[LexerScanner] def scan(line: Array[String], rowNo: Int): (ArraySeq[Token], ArraySeq[Error]) = line
-    .scanLeft((0, "")){ case ((colNo, _word), word) => (colNo + word.length, word) }
+    .scanLeft((0, "")){
+      case ((colNo, _word), word) => (colNo + word.length, word)
+    }
     .tail
     .foldLeft(ArraySeq[Token](), ArraySeq[Error]()) {
       case ((tokens, errors), (colNo, word)) if KeywordToken.isMatch(word) =>
@@ -82,6 +85,10 @@ object LexerScanner {
               case Some(head) if PunctuationToken.isMatch(head.toString) =>
                 state = StateType.SG_PUNC
                 tokenType = PunctuationToken.matchTokenType(head.toString)
+              case Some('_') =>
+                state = StateType.ERROR
+                tokenType = GeneralToken.ERROR
+                errorInformation = s"the underline character should not existed here."
               case Some(head) =>
                 state = StateType.ERROR
                 tokenType = GeneralToken.ERROR
