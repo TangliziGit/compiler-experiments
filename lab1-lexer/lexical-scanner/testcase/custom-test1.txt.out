@@ -1,0 +1,11 @@
+IDENTIFIER, cut
+DOT, .
+PRINTLN, System.out.println
+DOT, .
+IDENTIFIER, cut
+PRINTLN, System.out.println
+DOT, .
+IDENTIFIER, cut
+IDENTIFIER, cut
+DOT, .
+PRINTLN, System.out.println

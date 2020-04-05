@@ -69,6 +69,13 @@ object LexerScanner {
         var errorInformation: String = ""
 
         while (!((StateType.TERMINAL contains state) && restWord == "")) {
+          while (state == StateType.START && KeywordToken.isPrefixMatch(restWord)) {
+            val token: Token = KeywordToken.prefixMatchToken(restWord)
+            tokenBuffer += token
+            restWord = restWord.substring(token.`type`.toString.length)
+            if (restWord == "") state = StateType.DONE
+          }
+
           state match {
             case StateType.START => restWord.headOption match {
               case Some(head) if head.isDigit =>
@@ -113,7 +120,7 @@ object LexerScanner {
                 state = StateType.IDENTIFIER
                 tokenType = GeneralToken.IDENTIFIER
               case Some(head) if head.isDigit =>
-                state = StateType.DONE
+                state = StateType.IDENTIFIER
                 tokenType = GeneralToken.IDENTIFIER
               case Some('_') =>
                 state = StateType.UNDERLINE
@@ -163,15 +170,17 @@ object LexerScanner {
                 state = StateType.DONE
                 tokenType = PunctuationToken.AND
             }
+
+            case _ => ()
           }
 
           state match {
             case StateType.DONE =>
-              tokenBuffer += Token(tokenType, tokenWord)
+              if (tokenWord != "") tokenBuffer += Token(tokenType, tokenWord)
               tokenWord = ""
               if (restWord != "") state = StateType.START
             case StateType.ERROR =>
-              tokenBuffer += Token(GeneralToken.ERROR, restWord.headOption.getOrElse("").toString)
+              tokenBuffer += Token(GeneralToken.ERROR, tokenWord + restWord.headOption.getOrElse("").toString)
               errorBuffer += Error(line.mkString, errorInformation, rowNo, colNo - restWord.length)
               tokenWord = ""
               restWord = restWord.tail

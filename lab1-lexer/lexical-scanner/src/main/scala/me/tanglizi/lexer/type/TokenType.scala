@@ -41,11 +41,24 @@ object KeywordToken extends TokenType {
     case _ => false
   }
 
+  def isPrefixMatch(word: String): Boolean = KeywordToken.values
+    .find(x => word.startsWith(x.toString)) match {
+    case Some(_) => true
+    case _ => false
+  }
+
   def matchToken(word: String): Token = KeywordToken.values
     .find(_.toString == word) match {
     case Some(x) => Token(x, x.toString)
     case _ => Token(GeneralToken.ERROR, word)
   }
+
+  def prefixMatchToken(word: String): Token = KeywordToken.values
+    .find(x => word.startsWith(x.toString)) match {
+    case Some(x) => Token(x, x.toString)
+    case _ => Token(GeneralToken.ERROR, word)
+  }
+
 }
 
 object PunctuationToken extends TokenType {

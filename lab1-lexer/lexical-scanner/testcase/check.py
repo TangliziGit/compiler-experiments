@@ -14,6 +14,7 @@ for code in codes:
     out = ''.join(out)
 
     print(code == out)
-    print(code)
-    print(out)
+    if code != out:
+        print(code)
+        print(out)
     print()
