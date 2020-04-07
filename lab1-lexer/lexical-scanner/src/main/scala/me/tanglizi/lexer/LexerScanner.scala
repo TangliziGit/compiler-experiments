@@ -2,18 +2,12 @@ package me.tanglizi.lexer
 
 import java.io.PrintWriter
 
-import me.tanglizi.lexer.`type`.StateType.StateType
 import me.tanglizi.lexer.`type`.{Error, GeneralToken, KeywordToken, PunctuationToken, StateType, Token, TokenType}
 
-import scala.collection.immutable.ArraySeq
 import scala.collection.mutable.ArrayBuffer
 import scala.io.{BufferedSource, Source}
-import scala.util.matching.Regex
 
 object LexerScanner {
-
-  val separator: String = Regex.quote("[](){},;=<+-*!\t ")
-  val splitRegex: String = s"(?<=[$separator])|(?=[$separator])"
 
   def main(args: Array[String]): Unit = {
     val srcFilename: String = args(0)
@@ -21,35 +15,26 @@ object LexerScanner {
     val errFilename: String = args(2)
 
     val source: BufferedSource = Source.fromFile(srcFilename)
+    val (tokens, errors) = scan(source.mkString)
+    source.close
+
     val destWriter: PrintWriter = new PrintWriter(destFilename)
     val errWriter: PrintWriter = new PrintWriter(errFilename)
-
-    val content: String = source.mkString
-
-    val (tokens, errors) = scan(content)
 
     destWriter.print(tokens.mkString("\n"))
     errWriter.print(errors.mkString("\n"))
 
     destWriter.close()
     errWriter.close()
-    source.close
   }
 
   private[LexerScanner] def scan(source: String): (List[Token], List[Error]) = {
 
     def autoMachineMatch(source: String): (List[Token], List[Error]) = {
-      val tokens: ArrayBuffer[Token] = ArrayBuffer[Token]()
-      val errors: ArrayBuffer[Error] = ArrayBuffer[Error]()
-
-      var stateType: StateType.Value = StateType.START
-      var tokenType: TokenType#Value = GeneralToken.ERROR
-
-      var row = 0
-      var col = 0
-
-      var tokenContent = ""
-      var errorContent = ""
+      val (tokens, errors) = (ArrayBuffer[Token](), ArrayBuffer[Error]())
+      var (stateType, tokenType: TokenType#Value) = (StateType.START, GeneralToken.ERROR: TokenType#Value)
+      var (row, col) = (0, 0)
+      var (tokenContent, errorContent) = ("", "")
       var sourceTail: String = source
 
       while (!StateType.TERMINAL.contains(stateType) && sourceTail != "") {
@@ -72,12 +57,12 @@ object LexerScanner {
             case Some(head) if PunctuationToken.isMatch(head.toString) =>
               (StateType.SG_PUNC, PunctuationToken.matchTokenType(head.toString))
             case Some('_') =>
-              errorContent = s"the underline character should not existed here."
               needPass = true
+              errorContent = s"the underline character should not existed here."
               (StateType.ERROR, GeneralToken.ERROR)
             case Some(head) =>
-              errorContent = s"the character `$head` is not existed lexically."
               needPass = true
+              errorContent = s"the character `$head` is not existed lexically."
               (StateType.ERROR, GeneralToken.ERROR)
           }
 
@@ -109,10 +94,8 @@ object LexerScanner {
               (StateType.ERROR, GeneralToken.ERROR)
           }
 
-          case StateType.SG_PUNC => sourceTail.headOption match {
-            case _ =>
+          case StateType.SG_PUNC =>
               (StateType.DONE, tokenType)
-          }
 
           case StateType.DB_PUNC_FST => sourceTail.headOption match {
             case Some('&') =>
@@ -125,11 +108,8 @@ object LexerScanner {
               (StateType.ERROR, GeneralToken.ERROR)
           }
 
-          case StateType.DB_PUNC_SEC => sourceTail.headOption match {
-            case _ =>
+          case StateType.DB_PUNC_SEC =>
               (StateType.DONE, PunctuationToken.AND)
-          }
-
         }
 
         val (nextStateType, nextTokenType) = tmpStateType match {
@@ -138,17 +118,16 @@ object LexerScanner {
               tokens += Token(KeywordToken.withName(tokenContent), tokenContent)
             else
               tokens += Token(tmpTokenType, tokenContent)
-
             tokenContent = ""
             (StateType.START, GeneralToken.ERROR)
 
           case StateType.ERROR =>
             errors += Error("this line", errorContent, row, col-1)
-            tokenContent = ""
             if (needPass) {
               col += 1
               sourceTail = sourceTail.tail
             }
+            tokenContent = ""
             (StateType.START, GeneralToken.ERROR)
 
           case _ =>
@@ -169,7 +148,9 @@ object LexerScanner {
 
     var (rawTokens, rawErrors) = autoMachineMatch(source + '\n')
 
-    println(rawTokens.mkString("\n"))
+    val lines: Array[String] = source.split('\n')
+    val errors: List[Error] = rawErrors
+      .map(x => Error(lines(x.rowNo), x.information, x.rowNo, x.colNo))
     var tokens: ArrayBuffer[Token] = ArrayBuffer[Token]()
 
     while (rawTokens.nonEmpty) {
@@ -182,10 +163,6 @@ object LexerScanner {
           rawTokens = rawTokens.tail
       }
     }
-
-    val lines: Array[String] = source.split('\n')
-    val errors: List[Error] = rawErrors
-      .map(x => Error(lines(x.rowNo), x.information, x.rowNo, x.colNo))
 
     (tokens.toList, errors)
   }
