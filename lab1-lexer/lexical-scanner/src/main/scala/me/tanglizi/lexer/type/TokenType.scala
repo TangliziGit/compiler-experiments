@@ -1,5 +1,7 @@
 package me.tanglizi.lexer.`type`
 
+import scala.collection.immutable.ArraySeq
+
 trait TokenType extends Enumeration
 
 case class Error(line: String, information: String, rowNo: Int, colNo: Int) {
@@ -35,28 +37,20 @@ object KeywordToken extends TokenType {
   val NEW       = Value("new")
   val PRINTLN   = Value("System.out.println")
 
+  val tmp: List[String] = List()
+
   def isMatch(word: String): Boolean = KeywordToken.values
     .find(_.toString == word) match {
     case Some(_) => true
     case _ => false
   }
 
-  def isPrefixMatch(word: String): Boolean = KeywordToken.values
-    .find(x => word.startsWith(x.toString)) match {
-    case Some(_) => true
-    case _ => false
-  }
-
-  def matchToken(word: String): Token = KeywordToken.values
-    .find(_.toString == word) match {
-    case Some(x) => Token(x, x.toString)
-    case _ => Token(GeneralToken.ERROR, word)
-  }
-
-  def prefixMatchToken(word: String): Token = KeywordToken.values
-    .find(x => word.startsWith(x.toString)) match {
-    case Some(x) => Token(x, x.toString)
-    case _ => Token(GeneralToken.ERROR, word)
+  def tokenContentsMatch(tokenContents: List[Token]): Option[(Token, List[Token])] = tokenContents match {
+    case Token(_, "System") :: Token(_, ".") :: Token(_, "out") :: Token(_, ".")
+      :: Token(_, "println") :: tail =>
+      Some((Token(PRINTLN, "System.out.println"), tail))
+    case _ =>
+      None
   }
 
 }

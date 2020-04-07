@@ -29,8 +29,6 @@ WHILE, while
 LT_PAREN, (
 EXC, !
 FALSE, false
-ERROR, |
-ERROR, |
 TRUE, true
 RT_PAREN, )
 LT_BRACE, {
@@ -204,7 +202,6 @@ LT_PAREN, (
 IDENTIFIER, messagelist
 DOT, .
 LENGTH, length
-ERROR, >
 INTEGER_LITERAL, 0
 RT_PAREN, )
 LT_BRACE, {

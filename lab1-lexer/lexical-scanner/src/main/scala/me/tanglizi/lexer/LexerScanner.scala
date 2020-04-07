@@ -24,18 +24,9 @@ object LexerScanner {
     val destWriter: PrintWriter = new PrintWriter(destFilename)
     val errWriter: PrintWriter = new PrintWriter(errFilename)
 
-    val splicedLines: Iterator[Array[String]] = source.getLines()
-      .map(_
-        .split(splitRegex)
-        .filter(_ != "")
-      )
+    val content: String = source.mkString
 
-    val (tokens, errors) = splicedLines
-      .zipWithIndex
-      .map((scan _).tupled)
-      .foldLeft(ArraySeq[Token](), ArraySeq[Error]()) {
-        case ((tokens, errors), (token, error)) => (tokens ++ token, errors ++ error)
-      }
+    val (tokens, errors) = scan(content)
 
     destWriter.print(tokens.mkString("\n"))
     errWriter.print(errors.mkString("\n"))
@@ -45,155 +36,159 @@ object LexerScanner {
     source.close
   }
 
-  private[LexerScanner] def scan(line: Array[String], rowNo: Int): (ArraySeq[Token], ArraySeq[Error]) = line
-    .scanLeft((0, "")){
-      case ((colNo, _word), word) => (colNo + word.length, word)
-    }
-    .tail
-    .foldLeft(ArraySeq[Token](), ArraySeq[Error]()) {
-      case ((tokens, errors), (colNo, word)) if KeywordToken.isMatch(word) =>
-        (tokens :+ KeywordToken.matchToken(word), errors)
+  private[LexerScanner] def scan(source: String): (List[Token], List[Error]) = {
 
-      case ((tokens, errors), (colNo, whiteSpace)) if whiteSpace == " " || whiteSpace == "\t" =>
-        (tokens, errors)
+    def autoMachineMatch(source: String): (List[Token], List[Error]) = {
+      val tokens: ArrayBuffer[Token] = ArrayBuffer[Token]()
+      val errors: ArrayBuffer[Error] = ArrayBuffer[Error]()
 
-      case ((tokens, errors), (colNo, word)) =>
-        val tokenBuffer: ArrayBuffer[Token] = ArrayBuffer[Token]()
-        val errorBuffer: ArrayBuffer[Error] = ArrayBuffer[Error]()
+      var stateType: StateType.Value = StateType.START
+      var tokenType: TokenType#Value = GeneralToken.ERROR
 
-        var state: StateType = StateType.START
-        var tokenType: TokenType#Value = GeneralToken.ERROR
+      var row = 0
+      var col = 0
 
-        var restWord: String = word
-        var tokenWord: String = ""
-        var errorInformation: String = ""
+      var tokenContent = ""
+      var errorContent = ""
+      var sourceTail: String = source
 
-        while (!((StateType.TERMINAL contains state) && restWord == "")) {
-          while (state == StateType.START && KeywordToken.isPrefixMatch(restWord)) {
-            val token: Token = KeywordToken.prefixMatchToken(restWord)
-            tokenBuffer += token
-            restWord = restWord.substring(token.`type`.toString.length)
-            if (restWord == "") state = StateType.DONE
+      while (!StateType.TERMINAL.contains(stateType) && sourceTail != "") {
+
+        var needPass: Boolean = false
+        val (tmpStateType, tmpTokenType) = stateType match {
+          case StateType.START => sourceTail.headOption match {
+            case Some(head) if head.isDigit =>
+              (StateType.DIGIT, GeneralToken.INTEGER_LITERAL)
+            case Some(head) if head.isLetter =>
+              (StateType.IDENTIFIER, GeneralToken.IDENTIFIER)
+            case Some('&') =>
+              (StateType.DB_PUNC_FST, PunctuationToken.AND)
+            case Some(whiteSpace) if whiteSpace == ' ' || whiteSpace == '\t' =>
+              (StateType.START, tokenType)
+            case Some('\n') =>
+              row += 1
+              col = 0
+              (StateType.START, tokenType)
+            case Some(head) if PunctuationToken.isMatch(head.toString) =>
+              (StateType.SG_PUNC, PunctuationToken.matchTokenType(head.toString))
+            case Some('_') =>
+              errorContent = s"the underline character should not existed here."
+              needPass = true
+              (StateType.ERROR, GeneralToken.ERROR)
+            case Some(head) =>
+              errorContent = s"the character `$head` is not existed lexically."
+              needPass = true
+              (StateType.ERROR, GeneralToken.ERROR)
           }
 
-          state match {
-            case StateType.START => restWord.headOption match {
-              case Some(head) if head.isDigit =>
-                state = StateType.DIGIT
-                tokenType = GeneralToken.INTEGER_LITERAL
-              case Some(head) if head.isLetter =>
-                state = StateType.IDENTIFIER
-                tokenType = GeneralToken.IDENTIFIER
-              case Some('&') =>
-                state = StateType.DB_PUNC_FST
-                tokenType = PunctuationToken.AND
-              case Some(' ') =>
-                state = StateType.START
-              case Some(head) if PunctuationToken.isMatch(head.toString) =>
-                state = StateType.SG_PUNC
-                tokenType = PunctuationToken.matchTokenType(head.toString)
-              case Some('_') =>
-                state = StateType.ERROR
-                tokenType = GeneralToken.ERROR
-                errorInformation = s"the underline character should not existed here."
-              case Some(head) =>
-                state = StateType.ERROR
-                tokenType = GeneralToken.ERROR
-                errorInformation = s"the character `$head` is not existed lexically."
-              case _ =>
-                state = StateType.ERROR
-                tokenType = GeneralToken.ERROR
-                errorInformation = s"???"
-            }
-
-            case StateType.DIGIT => restWord.headOption match {
-              case Some(head) if head.isDigit =>
-                state = StateType.DIGIT
-                tokenType = GeneralToken.INTEGER_LITERAL
-              case _ =>
-                state = StateType.DONE
-                tokenType = GeneralToken.INTEGER_LITERAL
-            }
-
-            case StateType.IDENTIFIER => restWord.headOption match {
-              case Some(head) if head.isLetter =>
-                state = StateType.IDENTIFIER
-                tokenType = GeneralToken.IDENTIFIER
-              case Some(head) if head.isDigit =>
-                state = StateType.IDENTIFIER
-                tokenType = GeneralToken.IDENTIFIER
-              case Some('_') =>
-                state = StateType.UNDERLINE
-                tokenType = GeneralToken.IDENTIFIER
-              case _ =>
-                state = StateType.DONE
-                tokenType = GeneralToken.IDENTIFIER
-            }
-
-            case StateType.UNDERLINE => restWord.headOption match {
-              case Some(head) if head.isLetter =>
-                state = StateType.IDENTIFIER
-                tokenType = GeneralToken.IDENTIFIER
-              case Some(head) if head.isDigit =>
-                state = StateType.IDENTIFIER
-                tokenType = GeneralToken.IDENTIFIER
-              case Some(head) =>
-                state = StateType.ERROR
-                tokenType = GeneralToken.ERROR
-                errorInformation = s"after the underline must be a letter or digit, not `$head`."
-              case _ =>
-                state = StateType.ERROR
-                tokenType = GeneralToken.ERROR
-                errorInformation = s"a letter or digit must follow the underline."
-            }
-
-            case StateType.SG_PUNC => restWord.headOption match {
-              case _ => state = StateType.DONE
-            }
-
-            case StateType.DB_PUNC_FST => restWord.headOption match {
-              case Some('&') =>
-                state = StateType.DB_PUNC_SEC
-                tokenType = PunctuationToken.AND
-              case Some(head) =>
-                state = StateType.ERROR
-                tokenType = GeneralToken.ERROR
-                errorInformation = s"the AND operator is `&&`, not single `&` or `&$head`."
-              case _ =>
-                state = StateType.ERROR
-                tokenType = GeneralToken.ERROR
-                errorInformation = s"the AND operator is `&&`, not single `&`."
-            }
-
-            case StateType.DB_PUNC_SEC => restWord.headOption match {
-              case _ =>
-                state = StateType.DONE
-                tokenType = PunctuationToken.AND
-            }
-
-            case _ => ()
-          }
-
-          state match {
-            case StateType.DONE =>
-              if (tokenWord != "") tokenBuffer += Token(tokenType, tokenWord)
-              tokenWord = ""
-              if (restWord != "") state = StateType.START
-            case StateType.ERROR =>
-              tokenBuffer += Token(GeneralToken.ERROR, tokenWord + restWord.headOption.getOrElse("").toString)
-              errorBuffer += Error(line.mkString, errorInformation, rowNo, colNo - restWord.length)
-              tokenWord = ""
-              restWord = restWord.tail
-              if (restWord != "") state = StateType.START
+          case StateType.DIGIT => sourceTail.headOption match {
+            case Some(head) if head.isDigit =>
+              (StateType.DIGIT, GeneralToken.INTEGER_LITERAL)
             case _ =>
-              val head: Char = restWord.headOption.getOrElse(' ')
-              if (head != ' ') tokenWord += head
-              restWord = restWord.tail
+              (StateType.DONE, GeneralToken.INTEGER_LITERAL)
           }
+
+          case StateType.IDENTIFIER => sourceTail.headOption match {
+            case Some(head) if head.isLetter =>
+              (StateType.IDENTIFIER, GeneralToken.IDENTIFIER)
+            case Some(head) if head.isDigit =>
+              (StateType.IDENTIFIER, GeneralToken.IDENTIFIER)
+            case Some('_') =>
+              (StateType.UNDERLINE, GeneralToken.IDENTIFIER)
+            case _ =>
+              (StateType.DONE, GeneralToken.IDENTIFIER)
+          }
+
+          case StateType.UNDERLINE => sourceTail.headOption match {
+            case Some(head) if head.isLetter =>
+              (StateType.IDENTIFIER, GeneralToken.IDENTIFIER)
+            case Some(head) if head.isDigit =>
+              (StateType.IDENTIFIER, GeneralToken.IDENTIFIER)
+            case Some(head) =>
+              errorContent = s"after the underline must be a letter or digit, not `$head`."
+              (StateType.ERROR, GeneralToken.ERROR)
+          }
+
+          case StateType.SG_PUNC => sourceTail.headOption match {
+            case _ =>
+              (StateType.DONE, tokenType)
+          }
+
+          case StateType.DB_PUNC_FST => sourceTail.headOption match {
+            case Some('&') =>
+              (StateType.DB_PUNC_SEC, PunctuationToken.AND)
+            case Some(head) =>
+              errorContent = s"the AND operator is `&&`, not single `&` or `&$head`."
+              (StateType.ERROR, GeneralToken.ERROR)
+            case _ =>
+              errorContent = s"the AND operator is `&&`, not single `&`."
+              (StateType.ERROR, GeneralToken.ERROR)
+          }
+
+          case StateType.DB_PUNC_SEC => sourceTail.headOption match {
+            case _ =>
+              (StateType.DONE, PunctuationToken.AND)
+          }
+
         }
 
-        (tokens ++ tokenBuffer, errors ++ errorBuffer)
+        val (nextStateType, nextTokenType) = tmpStateType match {
+          case StateType.DONE =>
+            if (tokenType == GeneralToken.IDENTIFIER && KeywordToken.isMatch(tokenContent))
+              tokens += Token(KeywordToken.withName(tokenContent), tokenContent)
+            else
+              tokens += Token(tmpTokenType, tokenContent)
+
+            tokenContent = ""
+            (StateType.START, GeneralToken.ERROR)
+
+          case StateType.ERROR =>
+            errors += Error("this line", errorContent, row, col-1)
+            tokenContent = ""
+            if (needPass) {
+              col += 1
+              sourceTail = sourceTail.tail
+            }
+            (StateType.START, GeneralToken.ERROR)
+
+          case _ =>
+            val head: Char = sourceTail.headOption.getOrElse(' ')
+            if (head != ' ' && head != '\t' && head != '\n')
+              tokenContent += head
+            col += 1
+            sourceTail = sourceTail.tail
+            (tmpStateType, tmpTokenType)
+        }
+
+        stateType = nextStateType
+        tokenType = nextTokenType
+      }
+
+      (tokens.toList, errors.toList)
     }
+
+    var (rawTokens, rawErrors) = autoMachineMatch(source + '\n')
+
+    println(rawTokens.mkString("\n"))
+    var tokens: ArrayBuffer[Token] = ArrayBuffer[Token]()
+
+    while (rawTokens.nonEmpty) {
+      KeywordToken.tokenContentsMatch(rawTokens) match {
+        case Some((token, restRawTokens)) =>
+          tokens += token
+          rawTokens = restRawTokens
+        case None =>
+          tokens += rawTokens.head
+          rawTokens = rawTokens.tail
+      }
+    }
+
+    val lines: Array[String] = source.split('\n')
+    val errors: List[Error] = rawErrors
+      .map(x => Error(lines(x.rowNo), x.information, x.rowNo, x.colNo))
+
+    (tokens.toList, errors)
+  }
 
 }
 
