@@ -23,7 +23,7 @@ digraph {
         START -> DIGIT [label="digit"];
         DIGIT -> DIGIT [label="digit"];
         DIGIT -> DONE  [label="[other]"];
-        DIGIT -> ERROR [label="other"];
+        DIGIT -> ERROR [label="."];
 
         // identifier
         START -> IDENTIFIER         [label="letter"];

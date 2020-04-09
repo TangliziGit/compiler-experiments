@@ -1,0 +1,11 @@
+(4:0): Error: the character `#` is not existed lexically.
+#
+^
+
+(5:0): Error: the underline character should not existed here.
+_APPosition_Input
+^
+
+(7:1): Error: the character `>` is not existed lexically.
++>
+ ^
