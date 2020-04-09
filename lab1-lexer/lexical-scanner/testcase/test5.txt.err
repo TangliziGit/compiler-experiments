@@ -1,3 +1,7 @@
+(21:15): Error: floating numbers are not supported.
+        out = 0.0;
+               ^
+
 (51:30): Error: the character `>` is not existed lexically.
         if(messagelist.length > 0){
                               ^

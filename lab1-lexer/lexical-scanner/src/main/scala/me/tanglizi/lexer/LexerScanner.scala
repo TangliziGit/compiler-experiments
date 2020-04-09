@@ -69,6 +69,10 @@ object LexerScanner {
           case StateType.DIGIT => sourceTail.headOption match {
             case Some(head) if head.isDigit =>
               (StateType.DIGIT, GeneralToken.INTEGER_LITERAL)
+            case Some('.') =>
+              needPass = true
+              errorContent = "floating numbers are not supported."
+              (StateType.ERROR, GeneralToken.ERROR)
             case _ =>
               (StateType.DONE, GeneralToken.INTEGER_LITERAL)
           }

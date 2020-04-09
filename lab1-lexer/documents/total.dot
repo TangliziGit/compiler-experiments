@@ -23,6 +23,7 @@ digraph {
         START -> DIGIT [label="digit"];
         DIGIT -> DIGIT [label="digit"];
         DIGIT -> DONE  [label="[other]"];
+        DIGIT -> ERROR [label="other"];
 
         // identifier
         START -> IDENTIFIER         [label="letter"];
@@ -32,7 +33,7 @@ digraph {
         UNDERLINE -> IDENTIFIER     [label="letter"];
         UNDERLINE -> IDENTIFIER     [label="digit"];
         IDENTIFIER -> DONE          [label="[other]"];
-        UNDERLINE -> ERROR          [label="other"];
+        UNDERLINE -> ERROR          [label="[other]"];
 
         // single punctuations
         START -> SG_PUNC            [label="single punctuation"];
@@ -42,7 +43,7 @@ digraph {
         START -> DB_PUNC_FST        [label="&"];
         DB_PUNC_FST -> DB_PUNC_SEC  [label="&"];
         DB_PUNC_SEC -> DONE         [label="[other]"];
-        DB_PUNC_FST -> ERROR        [label="other"];
+        DB_PUNC_FST -> ERROR        [label="[other]"];
     }
 }
 
