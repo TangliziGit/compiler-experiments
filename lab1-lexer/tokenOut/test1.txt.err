@@ -1,0 +1,11 @@
+(18:8): Error: the underline character should not existed here.
+        _index = 0;
+        ^
+
+(51:30): Error: the character `>` is not existed lexically.
+        if(messagelist.length > 0){
+                              ^
+
+(68:28): Error: the AND operator is `&&`, not single `&` or `&(`.
+        while((tmp2 < tmp3)&(tmp1<tmp2)){
+                            ^

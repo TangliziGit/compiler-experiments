@@ -1,0 +1,2 @@
+Main-Class: me.tanglizi.lexer.LexerScanner
+Class-Path: scala-library-2.13.0.jar

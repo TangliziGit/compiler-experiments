@@ -1,0 +1,11 @@
+(0:-1): Error: the character `#` is not existed lexically.
+#
+^
+
+(1:1): Error: the character `>` is not existed lexically.
++>
+ ^
+
+(5:11): Error: the AND operator is `&&`, not single `&` or `&(`.
+( 1 << 5 )&(1 < 4)
+           ^

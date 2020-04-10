@@ -203,6 +203,7 @@ LT_PAREN, (
 IDENTIFIER, messagelist
 DOT, .
 LENGTH, length
+ERROR, >
 INTEGER_LITERAL, 0
 RT_PAREN, )
 LT_BRACE, {

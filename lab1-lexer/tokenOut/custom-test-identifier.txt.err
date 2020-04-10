@@ -1,0 +1,7 @@
+(3:10): Error: after the underline must be a letter or digit, not `*`.
+underline_*
+          ^
+
+(4:0): Error: the underline character should not existed here.
+_APPosition_Input
+^

@@ -123,6 +123,7 @@ object LexerScanner {
 
           case StateType.ERROR =>
             errors += Error("this line", errorContent, row, col-1)
+            tokens += Token(GeneralToken.ERROR, tokenContent + sourceTail.headOption.getOrElse(""))
             if (needPass) {
               col += 1
               sourceTail = sourceTail.tail

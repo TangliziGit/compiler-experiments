@@ -1,0 +1,9 @@
+cut.System.out.println.cut
+System.out.println.cut
+cut.System.out.println
+System.out.printlnx
+#
+_APPosition_Input
+1flow1
++>
+.01
