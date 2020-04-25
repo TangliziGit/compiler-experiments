@@ -19,13 +19,12 @@ const unzip = (arr) => {
     return arr[0].map((col, i) => arr.map(r => r[i]));
 };
 
-const build = (startRules, rollback, n = 0) => {
+const build = (startRules) => {
     const outEdges = {};
     const state = {
         index: nextStateIndex++,
         rules: Array.from(closure(startRules))
     };
-    // console.log('state', state.index, state.rules, n);
 
     S.push(state);
 
@@ -58,16 +57,14 @@ const build = (startRules, rollback, n = 0) => {
                 end: G[hashed],
                 weight: key
             });
-            // console.log('edge', `${state.index} --${key}--> ${G[hashed]}\n`);
         } else {
             edges.push({
                 start: state.index,
                 end: nextStateIndex,
                 weight: key
             });
-            // console.log('edge', `${state.index} --${key}--> ${nextStateIndex}\n`);
             G[hashed] = nextStateIndex;
-            build(nextGeneratorRules, n+1);
+            build(nextGeneratorRules);
         }
 
     }
@@ -76,22 +73,14 @@ const build = (startRules, rollback, n = 0) => {
     return state;
 };
 
-const has = (set, o) => Array.from(set).filter(x => _.isEqual(x, o)).length > 0;
-
-const closure = (startRules, totalRules = new Set(), vis = new Set(), n = 0) => {
+const closure = (startRules, vis = new Set()) => {
     let rules = new Set();
-
-    //console.log('startRules', startRules);
-    //console.log('totalRules', totalRules);
-    //console.log('n', n);
 
     for (const rule of startRules) {
         if (rule.length <= rule.count) continue;
         const nextToken = rule.content[rule.count];
-        const prevToken = rule.content[rule.count - 1];
-        const closureRegex = /<.+/;
 
-        if (closureRegex.test(nextToken)) {
+        if (/<.+/.test(nextToken)) {
             if (!vis.has(nextToken)) {
                 // 处理非终结符
                 rules = new Set([...rules, ...R[nextToken]]);
@@ -104,8 +93,7 @@ const closure = (startRules, totalRules = new Set(), vis = new Set(), n = 0) => 
         return new Set(startRules);
     // key point 3
     // 计算起始规则的闭包
-    const nextTotalRules = new Set([...startRules, ...rules, ...totalRules]);
-    return new Set([...startRules, ...rules, ...closure(Array.from(rules), nextTotalRules, vis, n+1)]);
+    return new Set([...startRules, ...rules, ...closure(Array.from(rules), vis)]);
 };
 
 const draw = (S, E) => {
@@ -199,20 +187,11 @@ const genTable = (S, E) => {
     return [action, goto];
 };
 
-const machine = build(R['<Goal>']);
+build(R['<Goal>']);
 
 fs.writeFileSync('dfa.dot', draw(S, E));
 fs.writeFileSync('states.json', JSON.stringify(S));
 fs.writeFileSync('edges.json', JSON.stringify(E));
-
-// let state = S.filter(x =>
-//     x.rules.filter(r => r.count >= r.content.length).length >= 1 &&
-//     x.rules.length >= 2
-// );
-//
-// console.log(util.inspect(state, {showHidden: false, depth: null}));
-//
-// console.log(E.filter(x => x.start === 118));
 
 const [action, goto] = genTable(S, E);
 console.log(action, goto);
