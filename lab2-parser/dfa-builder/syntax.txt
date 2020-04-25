@@ -1,27 +1,62 @@
-<Goal>      ::= <MainClass> {{ <ClassDeclaration> }} EOF
+<Goal>      ::= <MainClass> <GoalR1> EOF
+
+<GoalR1>    ::= <ClassDeclaration> <GoalR1>
+              | 
 
 <MainClass> ::= class Identifier { public static void main ( String [ ] Identifier ) { <Statement> } }
 
 <ClassDeclaration>
-            ::= class Identifier [[ extends Identifier ]] { {{ <VarDeclaration> }} {{ <MethodDeclaration> }} }
+            ::= class Identifier <ClassDeclarationO1> { <ClassDeclarationR2> <ClassDeclarationR2> }
+
+<ClassDeclarationO1>
+            ::= extends Identifier
+              | 
+
+<ClassDeclarationR1>
+            ::= <VarDeclaration> <ClassDeclarationR1>
+              | 
+
+<ClassDeclarationR2>
+            ::= <MethodDeclaration> <ClassDeclarationR2>
+              | 
 
 <VarDeclaration>
             ::= <Type> Identifier ;
 
 <MethodDeclaration>
-            ::= public <Type> Identifier ( [[ <Type> Identifier {{ , <Type> Identifier }} ]] ) { {{ <VarDeclaration> }} {{ <Statement> }} return <Expression> ; }
+            ::= public <Type> Identifier ( <MethodDeclarationO1> ) { <MethodDeclarationR1> <MethodDeclarationR2> return <Expression> ; }
+
+<MethodDeclarationO1>
+            ::= <Type> Identifier <MethodDeclarationO1R1>
+              | 
+
+<MethodDeclarationO1R1>
+            ::= , <Type> Identifier <MethodDeclarationO1R1>
+              | 
+
+<MethodDeclarationR1>
+            ::= <VarDeclaration> <MethodDeclarationR1>
+              |
+
+<MethodDeclarationR2>
+            ::= <Statement> <MethodDeclarationR2>
+              |
 
 <Type>      ::= int [ ] 
               | boolean 
               | int 
               | Identifier
 
-<Statement> ::= { {{ <Statement> }} } 
+<Statement> ::= { <StatementR1> } 
               | if ( <Expression> ) <Statement> else <Statement>
               | while ( <Expression> ) <Statement>
               | System.out.println (  <Expression> ) ; 
               | Identifier = <Expression> ; 
               | Identifier [ <Expression> ] = <Expression> ;
+
+<StatementR1>
+            ::= <Statement> <StatementR1>
+              |
 
 <Expression>::= <Expression> && <Expression>  
               | <Expression> < <Expression>  
@@ -30,7 +65,7 @@
               | <Expression> * <Expression>  
               | <Expression> [ <Expression> ] 
               | <Expression> . length 
-              | <Expression> . Identifier ( [[ <Expression> {{ , <Expression> }} ]] ) 
+              | <Expression> . Identifier ( <ExpressionO1> ) 
               | IntegerLiteral  
               | true 
               | false 
@@ -40,3 +75,11 @@
               | new Identifier ( ) 
               | ! <Expression>  
               | ( <Expression> )
+
+<ExpressionO1>
+            ::= <Expression> <ExpressionO1R1>
+              |
+
+<ExpressionO1R1>
+            ::= , <Expression> <ExpressionO1R1>
+              |

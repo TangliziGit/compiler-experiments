@@ -1,10 +1,9 @@
 const _ = require('lodash');
 const fs = require('fs');
 const hash = require('object-hash');
-const util = require('util');
 const parser = require("./syntax-parser");
 
-const txt = fs.readFileSync('syntax2.txt').toString();
+const txt = fs.readFileSync('syntax.txt').toString();
 const R = parser.parse(txt);
 
 // state: {index: 0, rules: []}
@@ -32,8 +31,6 @@ const build = (startRules, rollback, n = 0) => {
 
     for (const r of state.rules) {
         let next = r.content[r.count];
-        if (next === '[[' || next === '{{')
-            next = r.content[r.count+1];
 
         if (outEdges[next] === undefined)
             outEdges[next] = [];
@@ -45,11 +42,7 @@ const build = (startRules, rollback, n = 0) => {
         const fromNextRules = outEdges[key]
             .map(_x => {
                 const x = clone(_x);
-                let next = x.content[x.count++];
-                if (next === '{{' || next === '[[') x.count++;
-
-                next = x.content[x.count];
-                if (next === '}}' || next === ']]') x.count++;
+                x.count++;
                 return [_x, x];
             })
             .filter(xs => xs[1].count <= xs[1].content.length);   // 终结态
@@ -83,37 +76,7 @@ const build = (startRules, rollback, n = 0) => {
     return state;
 };
 
-const antiNextToken = (nextToken) => {
-    switch (nextToken) {
-        case '{{': return '}}';
-        case '}}': return '{{';
-        case '[[': return ']]';
-        case ']]': return '[[';
-    }
-    return '';
-};
 const has = (set, o) => Array.from(set).filter(x => _.isEqual(x, o)).length > 0;
-const prev = (rule) => {
-    let i = rule.count-1, count = 1;
-
-    while ( i --> 0) {
-        if (rule.content[i] === '}}') count++;
-        else if (rule.content[i] === '{{') count--;
-        if (count === 0) return i;
-    }
-    return -1;
-};
-
-const after = (rule, nextToken) => {
-    let i = rule.count, count = 1;
-
-    while ( ++i < rule.content.length) {
-        if (rule.content[i] === antiNextToken(nextToken)) count--;
-        else if (rule.content[i] === nextToken) count++;
-        if (count === 0) return i;
-    }
-    return -1;
-};
 
 const closure = (startRules, totalRules = new Set(), vis = new Set(), n = 0) => {
     let rules = new Set();
@@ -125,55 +88,15 @@ const closure = (startRules, totalRules = new Set(), vis = new Set(), n = 0) => 
     for (const rule of startRules) {
         if (rule.length <= rule.count) continue;
         const nextToken = rule.content[rule.count];
-        const prevToken = rule.content[rule.count-1];
-        const closureRegex = /({{|\[\[|<.+)/;
+        const prevToken = rule.content[rule.count - 1];
+        const closureRegex = /<.+/;
 
-        if (closureRegex.test( nextToken )) {
-            // key point 2: handle EBNF operators
-            if (nextToken === '[[' || nextToken === '{{') {
-                // 处理循环或选项
-                let next = rule.content[rule.count+1];
-
-                // 添加循环（选项）内第一个非终结符的规则
-                if (/<.+/.test(next) && !vis.has(next)) {
-                    rules = new Set([...rules, ...R[next]]);
-                    vis.add(next);
-                }
-
-                // 添加循环（选项）外第一个非终结符的规则
-                let nextIdx = after(rule, nextToken)+1; // rule.content.indexOf('}}', rule.count) + 1;
-                next = rule.content[nextIdx];
-                if (/<.+/.test(next) && !vis.has(next)) {
-                    rules = new Set([...rules, ...R[next]]);
-                    vis.add(next);
-                }
-
-                // 添加本规则跳过循环（选项）的规则
-                const backward = {
-                    name: rule.name,
-                    content: rule.content,
-                    count: nextIdx,
-                };
-
-                // console.log('backward', !has(totalRules, backward), backward);
-                if (!has(totalRules, backward))
-                    rules.add(backward);
-
-            } else if (!vis.has(nextToken)) {
+        if (closureRegex.test(nextToken)) {
+            if (!vis.has(nextToken)) {
                 // 处理非终结符
                 rules = new Set([...rules, ...R[nextToken]]);
                 vis.add(nextToken);
             }
-        } else if (prevToken !== undefined && prevToken === '}}') {
-            const forward = {
-                name: rule.name,
-                content: rule.content,
-                count: prev(rule)
-            };
-
-            // console.log('forward', has(totalRules, forward), forward);
-            if (!has(totalRules, forward))
-                rules.add(forward);
         }
     }
 
