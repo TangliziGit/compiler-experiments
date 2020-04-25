@@ -1,0 +1,46 @@
+total
+    = rules:( rule )* {
+        const xs = rules
+            .map(x => {
+                return {[ x[0].name ]: x};
+            });
+        return Object.assign(...xs);
+    }
+
+rule
+    = left:ruleLeft _ (endl _)* '::=' _ right:ruleRight endl* {
+        return right
+            .map(x => {
+                x.name = left;
+                return x;
+            });
+    }
+
+ruleLeft
+    = id {
+        return text();
+    }
+
+ruleRight
+    = head:(id _)+ _ endl tail:(_ '|' _ (id _)* endl)* {
+        return tail
+            .reduce((xs, x) => {
+                xs.push( x[3].map(y => y[0]) );
+                return xs;
+            }, [head.map(x => x[0])])
+            .map(x => {
+                return {content: x, count: 0}
+            });
+    }
+
+id
+    = [0-9a-zA-Z<>{}\[\]\(\);,.=&\+\-\*\!]+ {
+        return text();
+    }
+
+endl
+    = '\n'
+    / '\r\n'
+
+_
+    = [ \t]*
