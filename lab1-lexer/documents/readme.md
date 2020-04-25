@@ -18,5 +18,6 @@ jar -cfm lexer.jar MANIFEST.MF .
 
 注意当前目录下包含`scala-library-2.13.0.jar`作为依赖文件  
 ```bash
+cd lexical-scanner
 java -jar lexer.jar testcase/custom-test1.txt out.txt err.txt
 ```
