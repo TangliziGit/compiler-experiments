@@ -12,6 +12,8 @@ const R = parser.parse(txt);
 let [S, E] = [[], []];
 let G = {};
 let nextStateIndex = 0;
+const EPS = '[EPS]';
+const EOF = '[EOF]';
 
 const clone = (a) => JSON.parse(JSON.stringify(a));
 const unzip = (arr) => {
@@ -42,6 +44,7 @@ const build = (startRules) => {
             .map(_x => {
                 const x = clone(_x);
                 x.count++;
+                x.lookahead = new Set(_x.lookahead);
                 return [_x, x];
             })
             .filter(xs => xs[1].count <= xs[1].content.length);   // 终结态
@@ -73,6 +76,80 @@ const build = (startRules) => {
     return state;
 };
 
+const isTerm = (x) => !/<.+/.test(x);
+const subSet = (set, xs) => {
+    const res = new Set(set);
+    for (const x of xs) res.delete(x);
+    return res;
+};
+
+const Follow = {};
+
+const follow = (x) => {
+    let set = new Set([EOF]);
+
+    for (const state of Object.keys(R)) {
+        for (const rule of R[state]) {
+            const idx = rule.content.indexOf(x);
+
+            if (idx === -1) continue;
+            if (idx !== rule.content.length-1) {
+                const tail = rule.content.slice(idx+1);
+                if (rule.name === tail[0]) continue;
+                set = new Set([...set, ...first(tail)]);
+            } else {
+                if (rule.name === x) continue;
+                set = new Set([...set, ...follow(rule.name)]);
+            }
+        }
+    }
+
+    Follow[x] = Array.from(set);
+    return set;
+};
+
+const First = {};
+
+const first = (xs, parent = null) => {
+    let set = new Set();
+
+    for (let i=0; i<xs.length; i++) {
+        const x = xs[i];
+
+        if (isTerm(x)){
+            set.add(x);
+            First[xs] = Array.from(set);
+            return set;
+        } else {
+            const nextFirst = R[x]
+                .map(r => {
+                    if (r.content.length === 0)
+                        return follow(r.name);
+                    else
+                        return first(r.content);
+                })
+                .reduce((set, s) => {
+                    return new Set([...set, ...s]);
+                }, new Set());
+
+            set = new Set([...set, ...subSet(nextFirst, [EPS])]);
+
+            if (!nextFirst.has(EPS)) {
+                First[xs] = Array.from(set);
+                return set;
+            }
+        }
+    }
+
+    if (parent === null)
+        set.add(EPS);
+    else
+        set = new Set([...set, ...parent]);
+
+    First[xs] = Array.from(set);
+    return set;
+};
+
 const closure = (startRules, vis = new Set()) => {
     let rules = new Set();
 
@@ -80,12 +157,18 @@ const closure = (startRules, vis = new Set()) => {
         if (rule.length <= rule.count) continue;
         const nextToken = rule.content[rule.count];
 
-        if (/<.+/.test(nextToken)) {
-            if (!vis.has(nextToken)) {
-                // 处理非终结符
-                rules = new Set([...rules, ...R[nextToken]]);
-                vis.add(nextToken);
-            }
+        const hashCode = hash(rule);
+        if (!isTerm(nextToken) && !vis.has(hashCode)) {
+            // 处理非终结符
+            const nextRules = R[nextToken]
+                .map(_x => {
+                    const x = clone(_x);
+                    x.lookahead = first(rule.content.slice(rule.count+1), rule.lookahead);
+                    return x;
+                });
+
+            rules = new Set([...rules, ...nextRules]);
+            vis.add(hashCode);
         }
     }
 
@@ -93,7 +176,29 @@ const closure = (startRules, vis = new Set()) => {
         return new Set(startRules);
     // key point 3
     // 计算起始规则的闭包
-    return new Set([...startRules, ...rules, ...closure(Array.from(rules), vis)]);
+    const nextClosure = closure(Array.from(rules), vis);
+
+    for (const nextRule of nextClosure) {
+        const likeRules = Array.from(rules)
+            .filter(r => {
+                return nextRule.name === r.name
+                    && nextRule.count === r.count
+                    && _.isEqual(nextRule.content, r.content)
+            });
+
+        if (likeRules.length === 0) {
+            rules.add(nextRule);
+            continue;
+        }
+
+        for (const likeRule of likeRules) {
+            nextRule.lookahead = new Set([...nextRule.lookahead, ...likeRule.lookahead]);
+            rules.delete(likeRule);
+        }
+        rules.add(nextRule);
+    }
+
+    return new Set([...startRules, ...rules]);
 };
 
 const draw = (S, E) => {
@@ -111,7 +216,9 @@ const draw = (S, E) => {
             .reduce((xs, x) => {
                 let rule = Array.from(x.content);
                 rule.splice(x.count, 0, '.');
-                return xs + `${x.name} ::= ${rule.join(' ')} \\l`;
+
+                const lookahead = Array.from(x.lookahead);
+                return xs + `${x.name} ::= ${rule.join(' ')}, ${lookahead.join(' / ')} \\l`;
             }, '');
 
         nodes.push(`${name}[shape="record" label="state ${state.index} \\l${escape(label)}"];`);
@@ -154,32 +261,70 @@ const genTable = (S, E) => {
     }
 
     for (const state of S) {
-        const termStates = state.rules
+        const termRules = state.rules
             .filter(x => x.count >= x.content.length);
 
-        for (const term of termStates) {
+        for (const rule of termRules) {
+            if (action[state.index] === undefined)
+                action[state.index] = {};
+            if (goto[state.index] === undefined)
+                goto[state.index] = {};
+
             // key point 5: handle reduce action
-            if (term.name === '<ExpressionTemp>' ||
-                term.name === '<Expression>') {
+            if (rule.name === '<ExpressionTemp>' ||
+                rule.name === '<Expression>') {
 
-                if (action[term.index] === undefined)
-                    action[term.index] = {};
+                // passed.
+                // if (action[state.index][';'] !== undefined
+                //     && action[state.index][';'] !== 'Reduce') {
+                //     console.log('## 1 ;');
+                //     console.log(state, rule);
+                // }
 
-                action[term.index][';'] = 'Reduce';
-                action[term.index][']'] = 'Reduce';
-                action[term.index][')'] = 'Reduce';
+                // if (action[state.index][']'] !== undefined
+                //     && action[state.index][']'] !== 'Reduce') {
+                //     console.log('## 1 ]');
+                //     console.log(state, rule);
+                // }
 
-            } else if (term.name === '<Type>') {
+                // if (action[state.index][')'] !== undefined
+                //     && action[state.index][')'] !== 'Reduce') {
+                //     console.log('## 1 )');
+                //     console.log(state, rule);
+                // }
 
-                if (action[term.index] === undefined)
-                    action[term.index] = {};
+                action[state.index][';'] = 'Reduce';
+                goto[state.index][';'] = [rule.name, rule.content.length];
+                action[state.index][']'] = 'Reduce';
+                goto[state.index][']'] = [rule.name, rule.content.length];
+                action[state.index][')'] = 'Reduce';
+                goto[state.index][')'] = [rule.name, rule.content.length];
 
-                action[term.index]['Identifier'] = 'Reduce';
+            } else if (rule.name === '<Type>') {
+
+                // passed.
+                // if (action[state.index]['Identifier'] !== undefined) {
+                //     console.log('## 2');
+                //     console.log(state, rule);
+                // }
+
+                action[state.index]['Identifier'] = 'Reduce';
+                goto[state.index]['Identifier'] = [rule.name, rule.content.length];
 
             } else {
 
-                action[term.index] = {};
-                action[term.index]['ALL'] = 'Reduce';
+                for (const lookahead of rule.lookahead){
+                    // passed.
+                    // if (action[state.index][lookahead] !== undefined &&
+                    //     action[state.index][lookahead] !== 'Reduce' &&
+                    //     goto[state.index][lookahead] !== rule.content.length){
+                    //     console.log('## 3', lookahead);
+                    //     console.log(state, rule, "origin:", goto[state.index][lookahead]);
+                    // }
+
+                    action[state.index][lookahead] = 'Reduce';
+                    goto[state.index][lookahead] = [rule.name, rule.content.length];
+                }
             }
         }
     }
@@ -187,11 +332,30 @@ const genTable = (S, E) => {
     return [action, goto];
 };
 
-build(R['<Goal>']);
+const startRules = R['<Goal>']
+    .map(x => {
+        x.lookahead = new Set([EOF]);
+        return x
+    });
+build(startRules);
 
-fs.writeFileSync('dfa.dot', draw(S, E));
-fs.writeFileSync('states.json', JSON.stringify(S));
-fs.writeFileSync('edges.json', JSON.stringify(E));
+const _S = S
+    .map(x => {
+        x.rules = x.rules.map(y => {
+            y.lookahead = Array.from(y.lookahead);
+            return y;
+        });
+        return x;
+    });
+
+fs.writeFileSync('./out/dfa.dot', draw(S, E));
+fs.writeFileSync('./out/states.json', JSON.stringify(_S));
+fs.writeFileSync('./out/edges.json', JSON.stringify(E));
 
 const [action, goto] = genTable(S, E);
-console.log(action, goto);
+fs.writeFileSync('./out/action.json', JSON.stringify(action));
+fs.writeFileSync('./out/goto.json', JSON.stringify(goto));
+
+console.log(Follow);
+console.log(First);
+

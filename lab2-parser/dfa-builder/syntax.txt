@@ -6,7 +6,7 @@
 <MainClass> ::= class Identifier { public static void main ( String [ ] Identifier ) { <Statement> } }
 
 <ClassDeclaration>
-            ::= class Identifier <ClassDeclarationO1> { <ClassDeclarationR2> <ClassDeclarationR2> }
+            ::= class Identifier <ClassDeclarationO1> { <ClassDeclarationR1> <ClassDeclarationR2> }
 
 <ClassDeclarationO1>
             ::= extends Identifier
