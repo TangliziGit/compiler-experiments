@@ -1,0 +1,1 @@
+dot -Tpng dfa.dot -o dfa.png  1215.23s user 1.75s system 99% cpu 20:20.58 total

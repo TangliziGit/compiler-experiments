@@ -1,5 +1,6 @@
 {
-  '<GoalR1>': [ '[EOF]', 'EOF' ],
+  '<Goal>': [ '[EOF]' ],
+  '<GoalR1>': [ '[EOF]' ],
   '<ClassDeclarationR2>': [ '[EOF]', '}' ],
   '<ClassDeclarationR1>': [ '[EOF]', 'public', '}' ],
   '<MethodDeclarationR2>': [ '[EOF]', 'return' ],
@@ -19,9 +20,7 @@
 {
   'class,Identifier,<ClassDeclarationO1>,{,<ClassDeclarationR1>,<ClassDeclarationR2>,}': [ 'class' ],
   '<ClassDeclaration>,<GoalR1>': [ 'class' ],
-  EOF: [ 'EOF' ],
-  '<GoalR1>,EOF': [ 'class', '[EOF]', 'EOF' ],
-  '<GoalR1>': [ 'class', '[EOF]', 'EOF' ],
+  '<GoalR1>': [ 'class', '[EOF]' ],
   '': [ '}' ],
   '{,<ClassDeclarationR1>,<ClassDeclarationR2>,}': [ '{' ],
   'public,<Type>,Identifier,(,<MethodDeclarationO1>,),{,<MethodDeclarationR1>,<MethodDeclarationR2>,return,<Expression>,;,}': [ 'public' ],
