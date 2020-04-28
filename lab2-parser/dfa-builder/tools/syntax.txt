@@ -1,4 +1,4 @@
-<Goal>      ::= <MainClass> <GoalR1> EOF
+<Goal>      ::= <MainClass> <GoalR1>
 
 <GoalR1>    ::= <ClassDeclaration> <GoalR1>
               | 

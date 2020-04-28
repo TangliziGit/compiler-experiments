@@ -1,9 +1,10 @@
 const _ = require('lodash');
 const fs = require('fs');
 const hash = require('object-hash');
-const parser = require("./syntax-parser");
+const parser = require("./tools/syntax-parser");
 
-const txt = fs.readFileSync('syntax.txt').toString();
+const txt = fs.readFileSync('tools/syntax.txt').toString();
+const start = '<Goal>';
 const R = parser.parse(txt);
 
 // state: {index: 0, rules: []}
@@ -83,8 +84,8 @@ const subSet = (set, xs) => {
     return res;
 };
 
+// key point 2: follow set and first set
 const Follow = {};
-
 const follow = (x) => {
     let set = new Set([EOF]);
 
@@ -109,7 +110,6 @@ const follow = (x) => {
 };
 
 const First = {};
-
 const first = (xs, parent = null) => {
     let set = new Set();
 
@@ -151,6 +151,7 @@ const first = (xs, parent = null) => {
 };
 
 const closure = (startRules, vis = new Set()) => {
+    // key point 3: 计算起始规则的闭包
     let rules = new Set();
 
     for (const rule of startRules) {
@@ -174,10 +175,9 @@ const closure = (startRules, vis = new Set()) => {
 
     if (rules.size === 0)
         return new Set(startRules);
-    // key point 3
-    // 计算起始规则的闭包
     const nextClosure = closure(Array.from(rules), vis);
 
+    // key point 4: 计算LR(1)的lookahead
     for (const nextRule of nextClosure) {
         const likeRules = Array.from(rules)
             .filter(r => {
@@ -243,6 +243,11 @@ const draw = (S, E) => {
 };
 
 const genTable = (S, E) => {
+    const associativity = {"-": 'left', "+": 'left'};
+    const priority = {
+        "&&": 0, "!": 1, "<": 2, "-": 3, "+":3,
+        "*": 4, "[": 5, ".":6
+    };
     const goto = {};
     const action = {};
 
@@ -270,73 +275,59 @@ const genTable = (S, E) => {
             if (goto[state.index] === undefined)
                 goto[state.index] = {};
 
-            // key point 5: handle reduce action
-            if (rule.name === '<ExpressionTemp>' ||
-                rule.name === '<Expression>') {
+            for (const lookahead of rule.lookahead){
+                if (action[state.index][lookahead] === 'Shift') {
+                    // key point 5: handle Shift/Reduce conflicting, by using operator priority and associativity.
+                    if (priority[lookahead] !== undefined) {
+                        const opb = lookahead;                  // Reduce
+                        const opa = rule.content.reverse()      // Shift
+                            .find(x => priority[x] !== undefined);
 
-                // passed.
-                // if (action[state.index][';'] !== undefined
-                //     && action[state.index][';'] !== 'Reduce') {
-                //     console.log('## 1 ;');
-                //     console.log(state, rule);
-                // }
-
-                // if (action[state.index][']'] !== undefined
-                //     && action[state.index][']'] !== 'Reduce') {
-                //     console.log('## 1 ]');
-                //     console.log(state, rule);
-                // }
-
-                // if (action[state.index][')'] !== undefined
-                //     && action[state.index][')'] !== 'Reduce') {
-                //     console.log('## 1 )');
-                //     console.log(state, rule);
-                // }
-
-                action[state.index][';'] = 'Reduce';
-                goto[state.index][';'] = [rule.name, rule.content.length];
-                action[state.index][']'] = 'Reduce';
-                goto[state.index][']'] = [rule.name, rule.content.length];
-                action[state.index][')'] = 'Reduce';
-                goto[state.index][')'] = [rule.name, rule.content.length];
-
-            } else if (rule.name === '<Type>') {
-
-                // passed.
-                // if (action[state.index]['Identifier'] !== undefined) {
-                //     console.log('## 2');
-                //     console.log(state, rule);
-                // }
-
-                action[state.index]['Identifier'] = 'Reduce';
-                goto[state.index]['Identifier'] = [rule.name, rule.content.length];
-
-            } else {
-
-                for (const lookahead of rule.lookahead){
-                    // passed.
-                    // if (action[state.index][lookahead] !== undefined &&
-                    //     action[state.index][lookahead] !== 'Reduce' &&
-                    //     goto[state.index][lookahead] !== rule.content.length){
-                    //     console.log('## 3', lookahead);
-                    //     console.log(state, rule, "origin:", goto[state.index][lookahead]);
-                    // }
-
+                        if (priority[opa] > priority[opb]) {
+                            action[state.index][lookahead] = 'Reduce';
+                            goto[state.index][lookahead] = [rule.name, rule.content.length];
+                        } else if (priority[opa] < priority[opb]) {
+                            continue;
+                        } else if (associativity[opa] === associativity[opb]) {
+                            if (associativity[opa] === 'left') {
+                                action[state.index][lookahead] = 'Reduce';
+                                goto[state.index][lookahead] = [rule.name, rule.content.length];
+                            } else {
+                                continue;
+                            }
+                        }
+                    } else {
+                        // in state 20 and 274, Identifier cause Shift/Reduce conflicting.
+                        // LR(2) is needed to handle this condition.
+                        // but fortunately, we can simply assign Reduce on this state.
+                        // because <MethodDecR1> can be always reduce, meanwhile <MethodDecR2> should start from <MethodDec>,
+                        // where is <MethodDecR1> reduced to.
+                        action[state.index][lookahead] = 'Reduce';
+                        goto[state.index][lookahead] = [rule.name, rule.content.length];
+                    }
+                } else {
                     action[state.index][lookahead] = 'Reduce';
                     goto[state.index][lookahead] = [rule.name, rule.content.length];
                 }
             }
+
+            // search end state
+            if (rule.name === '<Goal>' && rule.count >= rule.content.length)
+                action[state.index][EOF] = 'Accept';
         }
+
     }
 
     return [action, goto];
 };
 
-const startRules = R['<Goal>']
+// set start rules lookahead, which is EOF.
+const startRules = R[start]
     .map(x => {
         x.lookahead = new Set([EOF]);
         return x
     });
+
 build(startRules);
 
 const _S = S
@@ -355,7 +346,4 @@ fs.writeFileSync('./out/edges.json', JSON.stringify(E));
 const [action, goto] = genTable(S, E);
 fs.writeFileSync('./out/action.json', JSON.stringify(action));
 fs.writeFileSync('./out/goto.json', JSON.stringify(goto));
-
-console.log(Follow);
-console.log(First);
 
