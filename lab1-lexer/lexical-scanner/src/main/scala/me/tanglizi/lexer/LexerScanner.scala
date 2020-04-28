@@ -115,15 +115,15 @@ object LexerScanner {
         val (nextStateType, nextTokenType) = tmpStateType match {
           case StateType.DONE =>
             if (tokenType == GeneralToken.IDENTIFIER && KeywordToken.isMatch(tokenContent))
-              tokens += Token(KeywordToken.withName(tokenContent), tokenContent)
+              tokens += Token(KeywordToken.withName(tokenContent), tokenContent, row, col)
             else
-              tokens += Token(tmpTokenType, tokenContent)
+              tokens += Token(tmpTokenType, tokenContent, row, col)
             tokenContent = ""
             (StateType.START, GeneralToken.ERROR)
 
           case StateType.ERROR =>
             errors += Error("this line", errorContent, row, col-1)
-            tokens += Token(GeneralToken.ERROR, tokenContent + sourceTail.headOption.getOrElse(""))
+            tokens += Token(GeneralToken.ERROR, tokenContent + sourceTail.headOption.getOrElse(""), row, col)
             if (needPass) {
               col += 1
               sourceTail = sourceTail.tail

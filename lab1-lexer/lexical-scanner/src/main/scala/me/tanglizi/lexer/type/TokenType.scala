@@ -12,8 +12,8 @@ case class Error(line: String, information: String, rowNo: Int, colNo: Int) {
        |""".stripMargin
 }
 
-case class Token(`type`: TokenType#Value, content: String) {
-  override def toString: String = s"${GeneralToken.getName(`type`)}, $content"
+case class Token(`type`: TokenType#Value, content: String, row: Int, col: Int) {
+  override def toString: String = s"${GeneralToken.getName(`type`)}, $content, $row, $col"
 }
 
 object KeywordToken extends TokenType {
@@ -46,9 +46,9 @@ object KeywordToken extends TokenType {
   }
 
   def tokenContentsMatch(tokenContents: List[Token]): Option[(Token, List[Token])] = tokenContents match {
-    case Token(_, "System") :: Token(_, ".") :: Token(_, "out") :: Token(_, ".")
-      :: Token(_, "println") :: tail =>
-      Some((Token(PRINTLN, "System.out.println"), tail))
+    case Token(_, "System", _, _) :: Token(_, ".", _, _) :: Token(_, "out", _, _) :: Token(_, ".", _, _)
+      :: Token(_, "println", row, col) :: tail =>
+      Some((Token(PRINTLN, "System.out.println", row, col), tail))
     case _ =>
       None
   }
