@@ -48,7 +48,7 @@ const build = (startRules) => {
                 x.lookahead = new Set(_x.lookahead);
                 return [_x, x];
             })
-            .filter(xs => xs[1].count <= xs[1].content.length);   // 终结态
+            .filter(xs => xs[1].count <= xs[1].content.length);   // 非终结态
         const [fromRules, nextGeneratorRules] = unzip(fromNextRules);
 
         if (nextGeneratorRules.length === 0) continue;
@@ -59,13 +59,15 @@ const build = (startRules) => {
             edges.push({
                 start: state.index,
                 end: G[hashed],
-                weight: key
+                weight: key,
+                rules: fromRules
             });
         } else {
             edges.push({
                 start: state.index,
                 end: nextStateIndex,
-                weight: key
+                weight: key,
+                rules: fromRules
             });
             G[hashed] = nextStateIndex;
             build(nextGeneratorRules);
@@ -177,7 +179,7 @@ const closure = (startRules, vis = new Set()) => {
         return new Set(startRules);
     const nextClosure = closure(Array.from(rules), vis);
 
-    // key point 4: 计算LR(1)的lookahead
+    // key point 4: 合并lookahead
     for (const nextRule of nextClosure) {
         const likeRules = Array.from(rules)
             .filter(r => {
@@ -299,11 +301,23 @@ const genTable = (S, E) => {
                     } else {
                         // in state 20 and 274, Identifier cause Shift/Reduce conflicting.
                         // LR(2) is needed to handle this condition.
-                        // but fortunately, we can simply assign Reduce on this state.
-                        // because <MethodDecR1> can be always reduce, meanwhile <MethodDecR2> should start from <MethodDec>,
-                        // where is <MethodDecR1> reduced to.
-                        action[state.index][lookahead] = 'Reduce';
-                        goto[state.index][lookahead] = [rule.name, rule.content.length];
+                        // but fortunately, we can do simple LR(2), its idea is like SLR(1).
+                        // only analysis next next token in Shift condition, and let other tokens Reduce.
+                        const start = state.index;
+                        const end = goto[state.index][lookahead];
+                        const edge = E.filter(x => x.start === start && x.end === end)[0];
+                        const shiftRule = edge.rules[0];
+                        const nextNextSet = first(shiftRule.content.slice(shiftRule.count+1), shiftRule.lookahead);
+
+                        action[start][lookahead] = {};
+                        goto[start][lookahead] = {};
+                        for (const nextNext of nextNextSet) {
+                            action[start][lookahead][nextNext] = 'Shift';
+                            goto[start][lookahead][nextNext] = end;
+                        }
+
+                        action[state.index][lookahead]['[OTHER]'] = 'Reduce';
+                        goto[state.index][lookahead]['[OTHER]'] = [rule.name, rule.content.length];
                     }
                 } else {
                     action[state.index][lookahead] = 'Reduce';

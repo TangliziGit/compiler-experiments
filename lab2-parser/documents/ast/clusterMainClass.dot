@@ -1,0 +1,12 @@
+digraph {
+
+    subgraph clusterMainClass {
+        label="<MainClass>"
+        mainClass[shape="box" label="<MainClass>: (MainClassName, ArgumentName)"];
+        mainClassStatement[label="<Statement>"];
+    }
+
+    {
+        mainClass -> mainClassStatement;
+    }
+}

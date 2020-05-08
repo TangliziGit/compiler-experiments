@@ -1,0 +1,12 @@
+digraph {
+
+    subgraph clusterExpParKind {
+        label="<ExpParKind>"
+        expPar[shape="box" label="<Expression> [ParKind]"];
+        expP1[label="<Expression>"];
+    }
+
+    {
+        expPar -> expP1;
+    }
+}

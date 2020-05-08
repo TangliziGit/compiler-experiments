@@ -1,0 +1,6 @@
+class Main {
+    public static void mainx(String[] args) {
+        System.out.println(1);
+    }
+}
+

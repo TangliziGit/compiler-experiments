@@ -1,0 +1,246 @@
+digraph {
+
+    subgraph clusterGoal {
+        label="<Goal>";
+        goal[shape="box" label="<Goal>"];
+        goalMainClass[label="<MainClass>"];
+        goalClassDeclaration[label="<ClassDeclaration>"];
+        goalClassDeclarationMore[label="<ClassDeclaration> ..."];
+    }
+
+    subgraph clusterMainClass {
+        label="<MainClass>"
+        mainClass[shape="box" label="<MainClass>: (MainClassName, ArgumentName)"];
+        mainClassStatement[label="<Statement>"];
+    }
+
+    subgraph clusterClassDec {
+        label="<ClassDeclaration>"
+        classDec[shape="box" label="<ClassDeclaration>: (ClassName, [ExtendClassName])"];
+        classDecVarDec[label="<VarDeclaration>"];
+        classDecVarDecMore[label="<VarDeclaration> ..."];
+        classDecMethodDec[label="<MethodDeclaration>"];
+        classDecMethodDecMore[label="<MethodDeclaration> ..."];
+    }
+
+    subgraph clusterVarDec {
+        label="<VarDec>"
+        varDec[shape="box" label="<Type>: Identifier"];
+    }
+
+    subgraph clusterMethodDec {
+        label="<MethodDec>"
+        methodDec[shape="box" label="<MethodDeclaration>: (<Type>, Identifier)"];
+        methodDecArg[label="<Argument>"];
+        methodDecArgMore[label="<Argument> ..."];
+        methodDecVarDec[label="<VarDeclaration>"];
+        methodDecVarDecMore[label="<VarDeclaration> ..."];
+        methodDecStatement[label="<Statement>"];
+        methodDecStatementMore[label="<Statement> ..."];
+    }
+
+    subgraph clusterType {
+        label="<Type>"
+        type[shape="box" label="int[] / boolean / int / Identifier"];
+    }
+
+    subgraph clusterStatementSta {
+        label="<StatementSta>"
+        statementSta[shape="box" label="<Statement> [StateKind]"];
+        statementState[label="<Statement>"];
+        statementStateMore[label="<Statement> ..."];
+    }
+
+    subgraph clusterStatementIf {
+        label="<StatementIf>"
+        statementIf[shape="box" label="<Statement> [IfKind]"];
+        statementIf1[label="<Expression>"];
+        statementIf2[label="<Statement>"];
+        statementIf3[label="<Statement>"];
+    }
+
+    subgraph clusterStatementWhile {
+        label="<StatementWhile>"
+        statementWhile[shape="box" label="<Statement> [WhileKind]"];
+        statementW1[label="<Expression>"];
+        statementW2[label="<Statement>"];
+    }
+
+    subgraph clusterStatementPrint {
+        label="<StatementPrint>"
+        statementPrint[shape="box" label="<Statement> [PrintKind]"];
+        statementP[label="<Expression>"];
+    }
+
+    subgraph clusterStatementAssign {
+        label="<StatementAssign>"
+        statementAssign[shape="box" label="<Statement> [AssignKind]"];
+        statementA1[label="Identifier"];
+        statementA2[label="<Expression>"];
+    }
+
+    subgraph clusterStatementArrAssign {
+        label="<StatementArrAssign>"
+        statementArrAssign[shape="box" label="<Statement> [ArrAssignKind]"];
+        statementAr1[label="Identifier"];
+        statementAr2[label="<Expression>"];
+        statementAr3[label="<Expression>"];
+    }
+
+    subgraph clusterExpAnd {
+        label="<ExpAnd>"
+        expAnd[shape="box" label="<Expression> [AndKind]"];
+        expA1[label="<Expression>"];
+        expA2[label="<Expression>"];
+    }
+
+    subgraph clusterExpLt {
+        label="<ExpLt>"
+        expLt[shape="box" label="<Expression> [LtKind]"];
+        expLt1[label="<Expression>"];
+        expLt2[label="<Expression>"];
+    }
+
+    subgraph clusterExpAdd {
+        label="<ExpAdd>"
+        expAdd[shape="box" label="<Expression> [AddKind]"];
+        expAd1[label="<Expression>"];
+        expAd2[label="<Expression>"];
+    }
+
+    subgraph clusterExpSub {
+        label="<ExpSub>"
+        expSub[shape="box" label="<Expression> [SubKind]"];
+        expS1[label="<Expression>"];
+        expS2[label="<Expression>"];
+    }
+
+    subgraph clusterExpMulti {
+        label="<ExpMulti>"
+        expMulti[shape="box" label="<Expression> [MultiKind]"];
+        expM1[label="<Expression>"];
+        expM2[label="<Expression>"];
+    }
+
+    subgraph clusterExpBra {
+        label="<ExpBra>"
+        expBra[shape="box" label="<Expression> [BraKind]"];
+        expB1[label="<Expression>"];
+        expB2[label="<Expression>"];
+    }
+
+    subgraph clusterExpLen {
+        label="<ExpLen>"
+        expLen[shape="box" label="<Expression> [LenKind]"];
+        expL1[label="<Expression>"];
+    }
+
+    subgraph clusterExpCall {
+        label="<ExpCall>"
+        expCall[shape="box" label="<Expression> [CallKind]: Identifier"];
+        expC1[label="<Expression>"];
+        expC2[label="<Expression>" style=dashed];            // optional
+        expC2More[label="<Expression> ..." style=dashed];    // optional
+    }
+
+    subgraph clusterExp {
+        label="<Exp>"
+        exp[shape="box" label="IntegerLiteral / true / false / Identifier / this"];
+    }
+
+    subgraph clusterExpNewInt {
+        label="<ExpNewInt>"
+        expNewInt[shape="box" label="<Expression> [NewIntKind]"];
+        expNi1[label="<Expression>"];
+    }
+
+    subgraph clusterExpNewId {
+        label="<ExpNewId>"
+        expNewId[shape="box" label="<Expression> [NewIdKind]"];
+        expNd1[label="<Expression>"];
+    }
+
+    subgraph clusterExpNot {
+        label="<ExpNot>"
+        expNot[shape="box" label="<Expression> [NotIdKind]"];
+        expNo1[label="<Expression>"];
+    }
+
+    subgraph clusterExpParKind {
+        label="<ExpParKind>"
+        expPar[shape="box" label="<Expression> [ParKind]"];
+        expP1[label="<Expression>"];
+    }
+
+    {
+        goal -> goalMainClass;
+        goal -> goalClassDeclaration;
+        goal -> goalClassDeclarationMore;
+
+        mainClass -> mainClassStatement;
+
+        classDec -> classDecVarDec;
+        classDec -> classDecVarDecMore;
+        classDec -> classDecMethodDec;
+        classDec -> classDecMethodDecMore;
+
+        methodDec -> methodDecArg;
+        methodDec -> methodDecArgMore;
+        methodDec -> methodDecVarDec;
+        methodDec -> methodDecVarDecMore;
+        methodDec -> methodDecStatement;
+        methodDec -> methodDecStatementMore;
+
+        statementSta -> statementState;
+        statementSta -> statementStateMore;
+
+        statementIf -> statementIf1;
+        statementIf -> statementIf2;
+        statementIf -> statementIf3;
+
+        statementWhile -> statementW1;
+        statementWhile -> statementW2;
+
+        statementPrint -> statementP;
+
+        statementAssign -> statementA1;
+        statementAssign -> statementA2;
+
+        statementArrAssign -> statementAr1;
+        statementArrAssign -> statementAr2;
+        statementArrAssign -> statementAr3;
+
+        expAnd -> expA1;
+        expAnd -> expA2;
+
+        expLt -> expLt1;
+        expLt -> expLt2;
+
+        expAdd -> expAd1;
+        expAdd -> expAd2;
+
+        expSub -> expS1;
+        expSub -> expS2;
+
+        expMulti -> expM1;
+        expMulti -> expM2;
+
+        expBra -> expB1;
+        expBra -> expB2;
+
+        expLen -> expL1;
+
+        expCall -> expC1;
+        expCall -> expC2[style=dashed];
+        expCall -> expC2More[style=dashed];
+
+        expNewInt -> expNi1;
+
+        expNewId -> expNd1;
+
+        expNot -> expNo1;
+
+        expPar -> expP1;
+
+    }
+}

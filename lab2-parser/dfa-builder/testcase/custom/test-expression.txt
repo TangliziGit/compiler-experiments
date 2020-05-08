@@ -1,0 +1,23 @@
+class Main {
+    public static void main(String[] args) {{
+        mc = 1+1;
+        mc = 1-1;
+        mc = 1*1;
+        mc = 1&&1;
+        mc = 1<1;
+        mc = mc[1];
+        mc = mc.length;
+        mc = mc.start(1, 2, 3);
+        mc = 1234;
+        mc = true;
+        mc = false;
+        mc = args;
+        mc = this;
+        mc = new int [123];
+        mc = new MC();
+        mc = !true;
+        mc = (false);
+
+        mc = 1+2*3*mc.length+(1+1)*3 && !true;
+    }}
+}

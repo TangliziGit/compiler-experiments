@@ -1,0 +1,14 @@
+digraph {
+
+    subgraph clusterStatementAssign {
+        label="<StatementAssign>"
+        statementAssign[shape="box" label="<Statement> [AssignKind]"];
+        statementA1[label="Identifier"];
+        statementA2[label="<Expression>"];
+    }
+
+    {
+        statementAssign -> statementA1;
+        statementAssign -> statementA2;
+    }
+}

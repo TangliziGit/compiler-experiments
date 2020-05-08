@@ -64,17 +64,43 @@ const analyse = async (file) => {
 
             const [name, length] = Goto[state][tokenType];
             let children = [];
-            for (let i=0; i<length; i++){
+            for (let i = 0; i < length; i++) {
                 staStack.pop();
                 children.push(symStack.pop());
             }
             token = [name, children.reverse()];
             break;
 
+        } else if (action instanceof Object) {
+            // Simple LALR(2)
+            const tokenType2 = convert( (isTerm(token))? tokens[tokenId+1]: tokens[tokenId] );
+            const action2 = Action[state][tokenType][tokenType2];
+
+            if (action2 === 'Shift') {
+
+                const nextState = Goto[state][tokenType][tokenType2];
+                staStack.push(nextState);
+                symStack.push(token);
+                if (isTerm(token)) tokenId++;
+                token = tokens[tokenId];
+
+            } else if (action2 === undefined) {
+                // Reduce
+
+                const [name, length] = Goto[state][tokenType]['[OTHER]'];
+                let children = [];
+                for (let i=0; i<length; i++){
+                    staStack.pop();
+                    children.push(symStack.pop());
+                }
+                token = [name, children.reverse()];
+
+            }
+
         } else if (action === undefined) {
             const expected = Object.keys(Action[state]).join(', ');
             const lastToken = symStack[symStack.length-1][1];
-            console.error(`(${token[2]+1}:${token[3]}): Error: expect [${expected}] after \`${lastToken}\``);
+            console.error(`(${parseInt(token[2])+1}:${token[3]}): Error: expect [${expected}] after \`${lastToken}\``);
             console.error(source[token[2]]);
             console.error(' '.repeat(token[3]-2) + '^\n');
 
@@ -398,6 +424,7 @@ const main = async () => {
     try {
         const tree = await ast(analyse(process.argv[2]));
         fs.writeFileSync('syntaxOut.txt', tree);
+        console.log(tree);
     } catch (e) {}
 };
 

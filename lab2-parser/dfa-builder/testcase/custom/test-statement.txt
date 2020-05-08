@@ -1,0 +1,21 @@
+class Main {
+    public static void main(String[] args) {{
+
+        if (true + false) {
+            mc = new MyClient();
+        } else {
+            mc = new MyClient();
+        }
+
+        while (!false) {
+            handle = mc.start(10, 10);
+        }
+
+        System.out.println(1+1);
+
+        mc = new MyClient();
+
+        mc[2] = MyClient.apply();
+
+    }}
+}

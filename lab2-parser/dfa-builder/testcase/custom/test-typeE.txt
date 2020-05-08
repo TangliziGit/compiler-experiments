@@ -1,0 +1,15 @@
+class Main {
+    public static void main(String[] args) {{
+        mc = new MyClient();
+    }}
+}
+
+class NewHappend {
+    public int main2(int[] args) {
+        int a;
+        double b;
+        main c;
+
+        return mc;
+    }
+}

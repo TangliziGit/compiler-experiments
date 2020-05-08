@@ -1,0 +1,17 @@
+class Main {
+    public static void main(String[] args) {{
+        while (!false) {
+            handle = mc.start(10, 10);
+        }
+    }}
+}
+
+class NewHappend {
+    public int main2(int[] args, boolean b, int ) {
+        int mc;
+        int handle;
+
+        mc = new MyClient();
+        return mc[0];
+    }
+}

@@ -1,0 +1,14 @@
+digraph {
+
+    subgraph clusterStatementSta {
+        label="<StatementSta>"
+        statementSta[shape="box" label="<Statement> [StateKind]"];
+        statementState[label="<Statement>"];
+        statementStateMore[label="<Statement> ..."];
+    }
+
+    {
+        statementSta -> statementState;
+        statementSta -> statementStateMore;
+    }
+}

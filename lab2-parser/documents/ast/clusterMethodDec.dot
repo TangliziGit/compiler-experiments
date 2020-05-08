@@ -1,0 +1,22 @@
+digraph {
+
+    subgraph clusterMethodDec {
+        label="<MethodDec>"
+        methodDec[shape="box" label="<MethodDeclaration>: (<Type>, Identifier)"];
+        methodDecArg[label="<Argument>"];
+        methodDecArgMore[label="<Argument> ..."];
+        methodDecVarDec[label="<VarDeclaration>"];
+        methodDecVarDecMore[label="<VarDeclaration> ..."];
+        methodDecStatement[label="<Statement>"];
+        methodDecStatementMore[label="<Statement> ..."];
+    }
+
+    {
+        methodDec -> methodDecArg;
+        methodDec -> methodDecArgMore;
+        methodDec -> methodDecVarDec;
+        methodDec -> methodDecVarDecMore;
+        methodDec -> methodDecStatement;
+        methodDec -> methodDecStatementMore;
+    }
+}

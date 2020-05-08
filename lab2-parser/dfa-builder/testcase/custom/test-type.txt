@@ -1,0 +1,26 @@
+class Main {
+    public static void main(String[] args) {{
+        mc = new MyClient();
+        if (true + false) {
+            mc = new MyClient();
+        } else {
+            mc = new MyClient();
+        }
+        while (!false) {
+            handle = mc.start(10, 10);
+        }
+    }}
+}
+
+class NewHappend {
+    public int main2(int[] args) {
+        int mc;
+        int handle;
+
+        mc = new MyClient();
+        while(!false){
+            handle = mc.start(488, 388);
+        }
+        return mc[0];
+    }
+}

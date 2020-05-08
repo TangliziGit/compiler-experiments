@@ -1,0 +1,7 @@
+class Main {
+    public static void main(String[] args) {
+        whie (true) {
+            System.out.println(1);
+        }
+    }
+}

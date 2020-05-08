@@ -1,0 +1,18 @@
+digraph {
+
+    subgraph clusterClassDec {
+        label="<ClassDeclaration>"
+        classDec[shape="box" label="<ClassDeclaration>: (ClassName, [ExtendClassName])"];
+        classDecVarDec[label="<VarDeclaration>"];
+        classDecVarDecMore[label="<VarDeclaration> ..."];
+        classDecMethodDec[label="<MethodDeclaration>"];
+        classDecMethodDecMore[label="<MethodDeclaration> ..."];
+    }
+
+    {
+        classDec -> classDecVarDec;
+        classDec -> classDecVarDecMore;
+        classDec -> classDecMethodDec;
+        classDec -> classDecMethodDecMore;
+    }
+}

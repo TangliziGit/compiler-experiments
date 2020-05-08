@@ -1,0 +1,9 @@
+class Main {
+    public static void main(String[] args) {{
+        if (true) {
+            true + false
+        } else {
+            1 + 2
+        }
+    }}
+}

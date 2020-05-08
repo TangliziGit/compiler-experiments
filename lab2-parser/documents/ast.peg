@@ -1,0 +1,22 @@
+file
+    = 'digraph' _ '{\n' gs:(graph '\n')* _ '{' _ es:(edges '\n' )* _ '}' _ '}' _ {
+        return [gs.map(x=>x[0]), es.map(x=>x[0])];
+    }
+
+graph
+    = _ "subgraph" _ name:id _ '{' content:[^}]+ '}' {
+        return {name: name, content: content.join('')};
+    }
+
+edges
+    = es:([ ]* id _ '->' _ id '\n')* {
+        return es.reduce((xs, x) => {
+            xs.push([x[1], x[5]]);
+            return xs;
+        }, []);
+    }
+
+id = x:[a-zA-Z0-9;\[\]=]+   { return x.join(''); }
+
+_ = [ \n]*
+

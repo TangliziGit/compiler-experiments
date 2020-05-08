@@ -1,0 +1,12 @@
+digraph {
+
+    subgraph clusterStatementPrint {
+        label="<StatementPrint>"
+        statementPrint[shape="box" label="<Statement> [PrintKind]"];
+        statementP[label="<Expression>"];
+    }
+
+    {
+        statementPrint -> statementP;
+    }
+}
