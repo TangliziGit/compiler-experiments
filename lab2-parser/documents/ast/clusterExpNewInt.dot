@@ -1,0 +1,12 @@
+digraph {
+
+    subgraph clusterExpNewInt {
+        label="<ExpNewInt>"
+        expNewInt[shape="box" label="<Expression> [NewIntKind]"];
+        expNi1[label="<Expression>"];
+    }
+
+    {
+        expNewInt -> expNi1;
+    }
+}

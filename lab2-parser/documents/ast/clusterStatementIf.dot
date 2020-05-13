@@ -1,0 +1,16 @@
+digraph {
+
+    subgraph clusterStatementIf {
+        label="<StatementIf>"
+        statementIf[shape="box" label="<Statement> [IfKind]"];
+        statementIf1[label="<Expression>"];
+        statementIf2[label="<Statement>"];
+        statementIf3[label="<Statement>"];
+    }
+
+    {
+        statementIf -> statementIf1;
+        statementIf -> statementIf2;
+        statementIf -> statementIf3;
+    }
+}

@@ -1,0 +1,11 @@
+digraph {
+
+    subgraph clusterType {
+        label="<Type>"
+        type[shape="box" label="int[] / boolean / int / Identifier"];
+    }
+
+    {
+        
+    }
+}

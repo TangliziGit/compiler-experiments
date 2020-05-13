@@ -1,0 +1,14 @@
+digraph {
+
+    subgraph clusterExpSub {
+        label="<ExpSub>"
+        expSub[shape="box" label="<Expression> [SubKind]"];
+        expS1[label="<Expression>"];
+        expS2[label="<Expression>"];
+    }
+
+    {
+        expSub -> expS1;
+        expSub -> expS2;
+    }
+}

@@ -1,0 +1,11 @@
+digraph {
+
+    subgraph clusterVarDec {
+        label="<VarDec>"
+        varDec[shape="box" label="<Type>: Identifier"];
+    }
+
+    {
+        
+    }
+}

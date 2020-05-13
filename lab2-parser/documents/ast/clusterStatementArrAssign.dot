@@ -1,0 +1,16 @@
+digraph {
+
+    subgraph clusterStatementArrAssign {
+        label="<StatementArrAssign>"
+        statementArrAssign[shape="box" label="<Statement> [ArrAssignKind]"];
+        statementAr1[label="Identifier"];
+        statementAr2[label="<Expression>"];
+        statementAr3[label="<Expression>"];
+    }
+
+    {
+        statementArrAssign -> statementAr1;
+        statementArrAssign -> statementAr2;
+        statementArrAssign -> statementAr3;
+    }
+}

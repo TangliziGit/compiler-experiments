@@ -1,0 +1,12 @@
+digraph {
+
+    subgraph clusterExpLen {
+        label="<ExpLen>"
+        expLen[shape="box" label="<Expression> [LenKind]"];
+        expL1[label="<Expression>"];
+    }
+
+    {
+        expLen -> expL1;
+    }
+}
