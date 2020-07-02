@@ -2,6 +2,7 @@
 
 To store the code of compiler experiment courses in nwpu.  
 
+**借鉴请star :)**
 
 
 ## How to run
