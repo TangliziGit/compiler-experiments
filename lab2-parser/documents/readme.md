@@ -31,3 +31,8 @@
     原理上完全可以将词素序列作为输入。
     详情见`mjava-parser.js`的第9行`getToken`函数。
 4. 接问题3, 本程序依赖实验一的词法分析程序，本人已经将源程序和依赖的`jar`包放好了位置。因此只需要nodejs和java环境即可运行。
+
+
+# Reference
+
+- [利用符号的优先级来解决冲突](https://pandolia.net/tinyc/ch12_buttom_up_parse_b.html#id3)
